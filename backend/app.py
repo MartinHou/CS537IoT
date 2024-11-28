@@ -3,12 +3,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 from config import OPENAI_KEY
-import re
+from datetime import datetime
+import re, os
 
 app = Flask(__name__)
 CORS(app)
 
 # Setup your OpenAI API key
+FILE_PATH = 'data.json'
 client = OpenAI(api_key=OPENAI_KEY)
 
 
@@ -73,12 +75,44 @@ def compare_images():
         if not match:
             return jsonify({'message': "No JSON found between ###START### and ###END###"}), 500
         nutrition_json = match.group(1)
+        current_date = datetime.now().strftime("%Y-%m-%d")
         json_data = json.loads(nutrition_json)
+        json_data["date"] = current_date
+        append_json(json_data)
         print(json_data)
         return json_data, 200
 
     except Exception as e:
         return jsonify({'message': str(e)}), 500
+
+@app.route('/load', methods=['GET'])
+def generate():
+    with open(FILE_PATH, 'r', encoding='utf-8') as f:
+        try:
+            data = json.load(f)
+            return data, 200
+        except json.JSONDecodeError:
+            return "Json Parse Error", 500
+
+
+
+def append_json(new_json):
+    if os.path.exists(FILE_PATH):
+        with open(FILE_PATH, "r", encoding="utf-8") as file:
+            try:
+                existing_data = json.load(file)
+            except json.JSONDecodeError:
+                existing_data = []
+    else:  # File not exists
+        existing_data = []
+
+    if not isinstance(existing_data, list):
+        existing_data = []
+
+    existing_data.append(new_json)
+
+    with open(FILE_PATH, "w", encoding="utf-8") as file:
+        json.dump(existing_data, file, indent=4, ensure_ascii=False)
 
 
 if __name__ == '__main__':
