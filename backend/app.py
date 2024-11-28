@@ -75,7 +75,7 @@ def compare_images():
         if not match:
             return jsonify({'message': "No JSON found between ###START### and ###END###"}), 500
         nutrition_json = match.group(1)
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         json_data = json.loads(nutrition_json)
         json_data["date"] = current_date
         append_json(json_data)
