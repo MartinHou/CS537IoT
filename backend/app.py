@@ -69,6 +69,7 @@ def compare_images():
         # response_content = """
         # ###START###{"consumed_items":[{"name":"Tomato","calories":22,"sugar":3,"protein":1,"fat":0.2,"carbohydrates":5,"fiber":1.5,"sodium":5,"cholesterol":0},{"name":"Extra Snack Cake","calories":150,"sugar":12,"protein":1,"fat":6,"carbohydrates":20,"fiber":0.5,"sodium":150,"cholesterol":5}],"total_nutrition":{"calories":172,"sugar":15,"protein":2,"fat":6.2,"carbohydrates":25,"fiber":2,"sodium":155,"cholesterol":5}}###END###
         # """
+        print('GPT response get')
 
         response_content = response.choices[0].message.content
         match = re.search(r"###START###(.*?)###END###", response_content, re.DOTALL)
@@ -85,6 +86,36 @@ def compare_images():
     except Exception as e:
         return jsonify({'message': str(e)}), 500
 
+
+@app.route('/advice', methods=['GET'])
+def get_advice():
+    with open(FILE_PATH, 'r', encoding='utf-8') as f:
+        try:
+            data = json.load(f)
+            print(json.dumps(data))
+            prompt = "According to the nutrition consumption records, give a brief advice on my diet." \
+                     "=============" \
+                     + json.dumps(data)
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt}
+                    ],
+                }
+            ]
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages
+            )
+            response_content = response.choices[0].message.content
+            print(response_content)
+            return response_content, 200
+        except json.JSONDecodeError:
+            return "Json Parse Error", 500
+
+
 @app.route('/load', methods=['GET'])
 def generate():
     with open(FILE_PATH, 'r', encoding='utf-8') as f:
@@ -93,7 +124,6 @@ def generate():
             return data, 200
         except json.JSONDecodeError:
             return "Json Parse Error", 500
-
 
 
 def append_json(new_json):

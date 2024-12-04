@@ -4,6 +4,7 @@ import { LineChart } from '@mui/x-charts/LineChart';
 import { PieChart } from '@mui/x-charts/PieChart';
 import dayjs from 'dayjs';
 import './App.css';
+import TextArea from "antd/es/input/TextArea";
 
 const std_nutrition = [
 	{ label: 'carbohydrates', value: 55.6, unit: 'g' },
@@ -36,6 +37,7 @@ const aggregateNutrition = (data: any[]) => {
 
 function App() {
 	const [nutritionData, setNutritionData] = useState<any>([]);
+	const [advice, setAdvice] = useState("");
 	const chartData = useMemo(() => {
 		return nutritionData.map(item => ({
 			date: dayjs(item.date).valueOf(),
@@ -46,7 +48,7 @@ function App() {
 	const aggregatedNutrition = useMemo(() => aggregateNutrition(nutritionData), [nutritionData]);
 
 	const handleRefresh = function () {
-		fetch('http://127.0.0.1:5001/load', {
+		fetch('http://192.168.3.5:5001/load', {
 			method: 'GET',
 		})
 			.then(function (response) {
@@ -100,12 +102,36 @@ function App() {
 		);
 	};
 
+	const handleAdvice = function () {
+		fetch('http://192.168.3.5:5001/advice', {
+			method: 'GET',
+		})
+			.then(function (response) {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.text();
+			})
+			.then(function (data) {
+				setAdvice(data);
+			})
+			.catch(function (error) {
+				console.error('Error fetching data:', error);
+			});
+	}
+	console.log(advice)
+
 	return (
 		<div className="container">
 			<h1>Lose Weight Everyday</h1>
 			<Button onClick={handleRefresh} type="primary">
 				Refresh Nutrition Data
 			</Button>
+			<br/>
+			<Button onClick={handleAdvice} type="primary">
+				Get Diet Advice
+			</Button>
+			{advice && (<TextArea value={advice} />)}
 
 			{nutritionData.length > 0 && (
 				<>
@@ -126,6 +152,7 @@ function App() {
 							dataset={chartData}
 							height={400}
 							width={800}
+
 						/>
 					</div>
 
